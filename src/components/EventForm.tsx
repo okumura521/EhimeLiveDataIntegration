@@ -52,7 +52,7 @@ interface EventFormProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onSubmit?: (data: EventFormData) => void;
-  initialData?: Partial<EventFormData>;
+  initialData?: Partial<EventFormData & { id?: number }>;
   mode?: "create" | "edit";
 }
 
@@ -65,41 +65,45 @@ const EventForm = ({
 }: EventFormProps) => {
   const form = useForm<EventFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: mode === "edit"
-      ?{
-      title: initialData.title || "",
-      link: initialData.link || "",
-      content: initialData.content || "",
-      venue: initialData.venue || "",
-      date: initialData.date || initialData.date ? new Date(initialData.date as any) : new Date(),
-      fee: initialData.fee || "",
-      ticket: initialData.ticket || "",
-      time: initialData.time || "",
-    }
-    : {
-          title:   "",
-          link:    "",
-          content: "",
-          venue:   "",
-          date:    new Date(),
-          fee:     "",
-          ticket:  "",
-          time:    "",
-        },
+    defaultValues:
+      mode === "edit"
+        ? {
+            title: initialData.title || "",
+            link: initialData.link || "",
+            content: initialData.content || "",
+            venue: initialData.venue || "",
+            date:
+              initialData.date || initialData.date
+                ? new Date(initialData.date as any)
+                : new Date(),
+            fee: initialData.fee || "",
+            ticket: initialData.ticket || "",
+            time: initialData.time || "",
+          }
+        : {
+            title: "",
+            link: "",
+            content: "",
+            venue: "",
+            date: new Date(),
+            fee: "",
+            ticket: "",
+            time: "",
+          },
   });
 
-         // 初期データが非同期で入ってくる場合は reset() で再設定
+  // 初期データが非同期で入ってくる場合は reset() で再設定
   React.useEffect(() => {
     if (mode === "edit" && initialData) {
       form.reset({
-        title:   initialData.title   ?? "",
-        link:    initialData.link    ?? "",
+        title: initialData.title ?? "",
+        link: initialData.link ?? "",
         content: initialData.content ?? "",
-        venue:   initialData.venue   ?? "",
-        date:    initialData.date    ? new Date(initialData.date as any) : new Date(),
-        fee:     initialData.fee     ?? "",
-        ticket:  initialData.ticket  ?? "",
-        time:    initialData.time    ?? "",
+        venue: initialData.venue ?? "",
+        date: initialData.date ? new Date(initialData.date as any) : new Date(),
+        fee: initialData.fee ?? "",
+        ticket: initialData.ticket ?? "",
+        time: initialData.time ?? "",
       });
     }
   }, [initialData, mode, form]);

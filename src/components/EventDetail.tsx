@@ -23,15 +23,18 @@ export interface EventDetailProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   event?: {
-    id: string;
-    title: string;
-    link?: string;
-    content?: string;
-    venue?: string;
-    date?: string;
-    fee?: string;
-    ticket?: string;
-    time?: string;
+    id: number;
+    title: string | null;
+    link?: string | null;
+    content?: string | null;
+    venue?: string | null;
+    date?: string | null;
+    fee?: string | null;
+    ticket?: string | null;
+    time?: string | null;
+    created_at?: string;
+    guid?: string | null;
+    pubData?: string | null;
   };
 }
 
@@ -42,7 +45,7 @@ const EventDetail = ({
 }: EventDetailProps) => {
   // Default event data if no event is provided
   const defaultEvent = {
-    id: "1",
+    id: 1,
     title: "Sample Event",
     link: "https://example.com",
     content:
@@ -83,7 +86,7 @@ const EventDetail = ({
           <DialogHeader>
             <div className="flex justify-between items-center">
               <DialogTitle className="text-2xl font-bold tracking-tight">
-                {displayEvent.title}
+                {displayEvent.title || "No Title"}
               </DialogTitle>
               <Button
                 variant="ghost"
