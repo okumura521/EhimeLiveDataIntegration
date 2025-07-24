@@ -10,6 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Edit, Trash2, Eye } from "lucide-react";
 import EventForm from "@/components/EventForm";
 import EventDetail from "@/components/EventDetail";
@@ -19,11 +26,31 @@ import { Database } from "@/types/supabase";
 // Define event type based on the database schema
 type Event = Database["public"]["Tables"]["live_schedule"]["Row"];
 
+// Define area-venue mapping
+const AREA_VENUES = {
+  "Chuyo region": [
+    "necco",
+    "oto-doke",
+    "SALONKITTY",
+    "WStudioRED",
+    "Double-u Studio",
+  ],
+  "Toyo region": ["MusicBoxHACO", "JEANDORE", "JamSounds"],
+  "Nanyo region": [],
+};
+
+const AREAS = Object.keys(AREA_VENUES);
+
 const HomePage = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [sortField, setSortField] = useState<"date" | "venue">("date");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedArea, setSelectedArea] = useState<string>("");
+  const [selectedVenue, setSelectedVenue] = useState<string>("");
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [availableVenues, setAvailableVenues] = useState<string[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -51,18 +78,147 @@ const HomePage = () => {
     supabaseAnonKey || "",
   );
 
-  // Fetch events from Supabase
-  const fetchEvents = async () => {
-    setIsLoading(true);
-    console.log("Fetching events from live_schedule table...");
-    console.log("Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
-    console.log("Sort field:", sortField, "Direction:", sortDirection);
+  // Initialize current month and year
+  useEffect(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear().toString();
+    const currentMonth = (now.getMonth() + 1).toString().padStart(2, "0");
 
+    setSelectedYear(currentYear);
+    setSelectedMonth(currentMonth);
+  }, []);
+
+  // Fetch all events to get available years and months
+  const fetchAvailableYearsAndMonths = async () => {
     try {
       const { data, error } = await supabase
         .from("live_schedule")
+        .select("date")
+        .not("date", "is", null);
+
+      if (error) {
+        console.error("Error fetching dates:", error);
+        return;
+      }
+
+      const years = new Set<string>();
+      const months = new Set<string>();
+
+      data?.forEach((event) => {
+        if (event.date) {
+          const date = new Date(event.date);
+          const year = date.getFullYear().toString();
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          years.add(year);
+          months.add(month);
+        }
+      });
+
+      setAvailableYears(Array.from(years).sort());
+      setAvailableMonths(Array.from(months).sort());
+    } catch (error) {
+      console.error("Error fetching available dates:", error);
+    }
+  };
+
+  // Fetch available venues based on year, month, and area
+  const fetchAvailableVenues = async () => {
+    if (!selectedYear || !selectedMonth) return;
+
+    try {
+      const startDate = `${selectedYear}-${selectedMonth}-01`;
+      const endDate = `${selectedYear}-${selectedMonth}-31`;
+
+      let query = supabase
+        .from("live_schedule")
+        .select("venue")
+        .gte("date", startDate)
+        .lte("date", endDate)
+        .not("venue", "is", null);
+
+      // Filter by area if selected
+      if (
+        selectedArea &&
+        selectedArea !== "all" &&
+        AREA_VENUES[selectedArea as keyof typeof AREA_VENUES]
+      ) {
+        const venues = AREA_VENUES[selectedArea as keyof typeof AREA_VENUES];
+        if (venues.length > 0) {
+          query = query.in("venue", venues);
+        } else {
+          // If area has no venues, set empty array
+          setAvailableVenues([]);
+          return;
+        }
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching venues:", error);
+        return;
+      }
+
+      const uniqueVenues = Array.from(
+        new Set(data?.map((item) => item.venue).filter(Boolean)),
+      ).sort();
+
+      setAvailableVenues(uniqueVenues as string[]);
+    } catch (error) {
+      console.error("Error fetching available venues:", error);
+    }
+  };
+
+  // Fetch events from Supabase with year/month/area/venue filter
+  const fetchEvents = async () => {
+    if (!selectedYear || !selectedMonth) return;
+
+    setIsLoading(true);
+    console.log("Fetching events from live_schedule table...");
+    console.log(
+      "Selected year:",
+      selectedYear,
+      "Selected month:",
+      selectedMonth,
+      "Selected area:",
+      selectedArea,
+      "Selected venue:",
+      selectedVenue,
+    );
+
+    try {
+      const startDate = `${selectedYear}-${selectedMonth}-01`;
+      const endDate = `${selectedYear}-${selectedMonth}-31`;
+
+      let query = supabase
+        .from("live_schedule")
         .select("*")
-        .order(sortField, { ascending: sortDirection === "asc" });
+        .gte("date", startDate)
+        .lte("date", endDate);
+
+      // Filter by area if selected
+      if (
+        selectedArea &&
+        selectedArea !== "all" &&
+        AREA_VENUES[selectedArea as keyof typeof AREA_VENUES]
+      ) {
+        const venues = AREA_VENUES[selectedArea as keyof typeof AREA_VENUES];
+        if (venues.length > 0) {
+          query = query.in("venue", venues);
+        } else {
+          // If area has no venues, return empty results
+          setEvents([]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Filter by venue if selected
+      if (selectedVenue && selectedVenue !== "all") {
+        query = query.eq("venue", selectedVenue);
+      }
+
+      const { data, error } = await query.order("date", { ascending: true });
 
       console.log("Supabase response:", { data, error });
 
@@ -75,7 +231,6 @@ const HomePage = () => {
       setEvents(data || []);
     } catch (error) {
       console.error("Error fetching events:", error);
-      // Show error in UI as well
       alert(
         `Error fetching events: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
@@ -84,20 +239,26 @@ const HomePage = () => {
     }
   };
 
-  // Initial fetch and refetch when sort changes
+  // Initial fetch of available years and months
   useEffect(() => {
-    fetchEvents();
-  }, [sortField, sortDirection]);
+    fetchAvailableYearsAndMonths();
+  }, []);
 
-  // Toggle sort direction or change sort field
-  const handleSort = (field: "date" | "venue") => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
+  // Fetch available venues when year, month, or area changes
+  useEffect(() => {
+    if (selectedYear && selectedMonth) {
+      fetchAvailableVenues();
+      // Reset venue selection when area changes
+      setSelectedVenue("");
     }
-  };
+  }, [selectedYear, selectedMonth, selectedArea]);
+
+  // Fetch events when year, month, area, or venue changes
+  useEffect(() => {
+    if (selectedYear && selectedMonth) {
+      fetchEvents();
+    }
+  }, [selectedYear, selectedMonth, selectedArea, selectedVenue]);
 
   // Handle event creation
   const handleCreateEvent = async (eventData: any) => {
@@ -132,6 +293,7 @@ const HomePage = () => {
 
       console.log("Event created successfully:", data);
       setIsFormOpen(false);
+      fetchAvailableYearsAndMonths();
       fetchEvents();
     } catch (error) {
       console.error("Error creating event:", error);
@@ -175,6 +337,7 @@ const HomePage = () => {
       console.log("Event updated successfully");
       setIsFormOpen(false);
       setEditingEvent(null);
+      fetchAvailableYearsAndMonths();
       fetchEvents();
     } catch (error) {
       console.error("Error updating event:", error);
@@ -204,6 +367,7 @@ const HomePage = () => {
       }
 
       console.log("Event deleted successfully");
+      fetchAvailableYearsAndMonths();
       fetchEvents();
     } catch (error) {
       console.error("Error deleting event:", error);
@@ -241,37 +405,69 @@ const HomePage = () => {
         </header>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div className="flex gap-4">
-            <Button
-              variant="outline"
-              onClick={() => handleSort("date")}
-              className="flex items-center gap-2"
-            >
-              日付
-              <ArrowUpDown
-                size={16}
-                className={
-                  sortField === "date"
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                }
-              />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleSort("venue")}
-              className="flex items-center gap-2"
-            >
-              会場
-              <ArrowUpDown
-                size={16}
-                className={
-                  sortField === "venue"
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                }
-              />
-            </Button>
+          <div className="flex gap-4 items-center flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Year:</label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Month:</label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableMonths.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Area:</label>
+              <Select value={selectedArea} onValueChange={setSelectedArea}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="All Areas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Areas</SelectItem>
+                  {AREAS.map((area) => (
+                    <SelectItem key={area} value={area}>
+                      {area}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Venue:</label>
+              <Select value={selectedVenue} onValueChange={setSelectedVenue}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="All Venues" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Venues</SelectItem>
+                  {availableVenues.map((venue) => (
+                    <SelectItem key={venue} value={venue}>
+                      {venue}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <Button
             onClick={() => {
@@ -289,145 +485,117 @@ const HomePage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full bg-background rounded-md border"
+          className="w-full bg-background rounded-md border overflow-x-auto"
         >
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-[250px] font-bold">Title</TableHead>
-                <TableHead className="w-[150px] font-bold">Link</TableHead>
-                <TableHead className="w-[250px] font-bold">Content</TableHead>
-                <TableHead
-                  className="w-[150px] font-bold cursor-pointer"
-                  onClick={() => handleSort("venue")}
-                >
-                  <div className="flex items-center">
-                    Venue
-                    <ArrowUpDown
-                      size={16}
-                      className={
-                        sortField === "venue"
-                          ? "text-primary ml-2"
-                          : "text-muted-foreground ml-2"
-                      }
-                    />
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="w-[120px] font-bold cursor-pointer"
-                  onClick={() => handleSort("date")}
-                >
-                  <div className="flex items-center">
-                    Date
-                    <ArrowUpDown
-                      size={16}
-                      className={
-                        sortField === "date"
-                          ? "text-primary ml-2"
-                          : "text-muted-foreground ml-2"
-                      }
-                    />
-                  </div>
-                </TableHead>
-                <TableHead className="w-[100px] font-bold">Fee</TableHead>
-                <TableHead className="w-[150px] font-bold">Ticket</TableHead>
-                <TableHead className="w-[120px] font-bold">Time</TableHead>
-                <TableHead className="w-[120px] font-bold text-right">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
-                    Loading events...
-                  </TableCell>
+          <div className="min-w-[1200px]">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[250px] font-bold">Title</TableHead>
+                  <TableHead className="w-[150px] font-bold">Link</TableHead>
+                  <TableHead className="w-[250px] font-bold">Content</TableHead>
+                  <TableHead className="w-[150px] font-bold">Venue</TableHead>
+                  <TableHead className="w-[120px] font-bold">Date</TableHead>
+                  <TableHead className="w-[100px] font-bold">Fee</TableHead>
+                  <TableHead className="w-[150px] font-bold">Ticket</TableHead>
+                  <TableHead className="w-[120px] font-bold">Time</TableHead>
+                  <TableHead className="w-[120px] font-bold text-right">
+                    Actions
+                  </TableHead>
                 </TableRow>
-              ) : events.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
-                    <div>
-                      <p>No events found</p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Check console for connection details
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                events.map((event) => (
-                  <motion.tr
-                    key={event.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className={`${hoveredRow === event.id.toString() ? "bg-accent" : ""}`}
-                    onMouseEnter={() => setHoveredRow(event.id.toString())}
-                    onMouseLeave={() => setHoveredRow(null)}
-                  >
-                    <TableCell className="font-medium">
-                      {event.title || "No Title"}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8">
+                      Loading events...
                     </TableCell>
-                    <TableCell className="text-blue-600 hover:underline">
-                      {event.link && (
-                        <a
-                          href={event.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {event.link.length > 20
-                            ? `${event.link.substring(0, 20)}...`
-                            : event.link}
-                        </a>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-[250px] truncate">
-                      {event.content || ""}
-                    </TableCell>
-                    <TableCell>{event.venue || ""}</TableCell>
-                    <TableCell>
-                      {event.date
-                        ? new Date(event.date).toLocaleDateString()
-                        : ""}
-                    </TableCell>
-                    <TableCell>{event.fee || ""}</TableCell>
-                    <TableCell>{event.ticket || ""}</TableCell>
-                    <TableCell>{event.time || ""}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewEvent(event)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditEvent(event)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteEvent(event.id)}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                  </TableRow>
+                ) : events.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8">
+                      <div>
+                        <p>No events found</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Check console for connection details
+                        </p>
                       </div>
                     </TableCell>
-                  </motion.tr>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                  </TableRow>
+                ) : (
+                  events.map((event) => (
+                    <motion.tr
+                      key={event.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className={`${hoveredRow === event.id.toString() ? "bg-accent" : ""}`}
+                      onMouseEnter={() => setHoveredRow(event.id.toString())}
+                      onMouseLeave={() => setHoveredRow(null)}
+                    >
+                      <TableCell className="font-medium">
+                        {event.title || "No Title"}
+                      </TableCell>
+                      <TableCell className="text-blue-600 hover:underline">
+                        {event.link && (
+                          <a
+                            href={event.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {event.link.length > 20
+                              ? `${event.link.substring(0, 20)}...`
+                              : event.link}
+                          </a>
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-[250px] truncate">
+                        {event.content || ""}
+                      </TableCell>
+                      <TableCell>{event.venue || ""}</TableCell>
+                      <TableCell>
+                        {event.date
+                          ? new Date(event.date).toLocaleDateString()
+                          : ""}
+                      </TableCell>
+                      <TableCell>{event.fee || ""}</TableCell>
+                      <TableCell>{event.ticket || ""}</TableCell>
+                      <TableCell>{event.time || ""}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewEvent(event)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditEvent(event)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteEvent(event.id)}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </motion.tr>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </motion.div>
       </motion.div>
 
