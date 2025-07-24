@@ -398,9 +398,9 @@ const HomePage = () => {
         className="max-w-7xl mx-auto"
       >
         <header className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">EVENT LIST</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-2">EhimeLiveDataIntegration</h1>
           <p className="text-muted-foreground text-lg">
-            クールでアーティスティックなイベント管理
+            Sortable by year, month, area, and venue.
           </p>
         </header>
 
@@ -492,7 +492,7 @@ const HomePage = () => {
             className="flex items-center gap-2"
           >
             <Plus size={16} />
-            イベント追加
+            NewEvent
           </Button>
         </div>
 
