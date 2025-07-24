@@ -25,13 +25,13 @@ export interface EventDetailProps {
   event?: {
     id: number;
     title: string | null;
-    link?: string | null;
-    content?: string | null;
-    venue?: string | null;
-    date?: string | null;
-    fee?: string | null;
-    ticket?: string | null;
-    time?: string | null;
+    link: string | null;
+    content: string | null;
+    venue: string | null;
+    date: string | null;
+    fee: string | null;
+    ticket: string | null;
+    time: string | null;
     created_at?: string;
     guid?: string | null;
     pubData?: string | null;

@@ -327,7 +327,7 @@ const HomePage = () => {
       const { error } = await supabase
         .from("live_schedule")
         .update(formattedData)
-        .eq("id", eventData.id);
+        .eq("id", editingEvent?.id);
 
       if (error) {
         console.error("Supabase update error:", error);
