@@ -35,7 +35,7 @@ export interface EventDetailProps {
     created_at?: string;
     guid?: string | null;
     pubData?: string | null;
-  };
+  } | null;
 }
 
 const EventDetail = ({

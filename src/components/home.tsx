@@ -418,6 +418,11 @@ const HomePage = () => {
                       {year}
                     </SelectItem>
                   ))}
+                  {availableYears.length === 0 && (
+                    <SelectItem value="no-years" disabled>
+                      No years available
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -433,6 +438,11 @@ const HomePage = () => {
                       {month}
                     </SelectItem>
                   ))}
+                  {availableMonths.length === 0 && (
+                    <SelectItem value="no-months" disabled>
+                      No months available
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -465,6 +475,11 @@ const HomePage = () => {
                       {venue}
                     </SelectItem>
                   ))}
+                  {availableVenues.length === 0 && (
+                    <SelectItem value="no-venues" disabled>
+                      No venues available
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -612,7 +627,6 @@ const HomePage = () => {
         initialData={
           editingEvent
             ? {
-                id: editingEvent.id,
                 title: editingEvent.title || "",
                 link: editingEvent.link || "",
                 content: editingEvent.content || "",
@@ -623,6 +637,7 @@ const HomePage = () => {
                 fee: editingEvent.fee || "",
                 ticket: editingEvent.ticket || "",
                 time: editingEvent.time || "",
+                id: editingEvent.id,
               }
             : {}
         }
