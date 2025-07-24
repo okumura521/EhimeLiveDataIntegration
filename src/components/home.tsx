@@ -46,8 +46,8 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [selectedArea, setSelectedArea] = useState<string>("");
-  const [selectedVenue, setSelectedVenue] = useState<string>("");
+  const [selectedArea, setSelectedArea] = useState<string>("all");
+  const [selectedVenue, setSelectedVenue] = useState<string>("all");
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [availableVenues, setAvailableVenues] = useState<string[]>([]);
@@ -249,7 +249,7 @@ const HomePage = () => {
     if (selectedYear && selectedMonth) {
       fetchAvailableVenues();
       // Reset venue selection when area changes
-      setSelectedVenue("");
+      setSelectedVenue("all");
     }
   }, [selectedYear, selectedMonth, selectedArea]);
 
