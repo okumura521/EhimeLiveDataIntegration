@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parse, endOfMonth, format } from "date-fns";
 import { motion } from "framer-motion";
 import { Plus, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,15 +29,16 @@ type Event = Database["public"]["Tables"]["live_schedule"]["Row"];
 
 // Define area-venue mapping
 const AREA_VENUES = {
-  "Chuyo region": [
+  "中予": [
     "necco",
     "oto-doke",
     "SALONKITTY",
+    "KITTYHALL",
     "WStudioRED",
     "Double-u Studio",
   ],
-  "Toyo region": ["MusicBoxHACO", "JEANDORE", "JamSounds"],
-  "Nanyo region": [],
+  "東予": ["MusicBoxHACO", "JEANDORE", "JamSounds"],
+  "南予": [],
 };
 
 const AREAS = Object.keys(AREA_VENUES);
@@ -126,8 +128,17 @@ const HomePage = () => {
     if (!selectedYear || !selectedMonth) return;
 
     try {
-      const startDate = `${selectedYear}-${selectedMonth}-01`;
-      const endDate = `${selectedYear}-${selectedMonth}-31`;
+
+      // 年・月文字列から Date オブジェクトを作成
+      const baseDate = parse(
+        `${selectedYear}-${selectedMonth}`,
+        "yyyy-MM",
+        new Date()
+      );
+      // 月初: 常に "01"
+      const startDate = format(baseDate, "yyyy-MM-01");
+      // 月末: endOfMonth で正しい最終日を取得
+      const endDate   = format(endOfMonth(baseDate), "yyyy-MM-dd");
 
       let query = supabase
         .from("live_schedule")
@@ -187,8 +198,16 @@ const HomePage = () => {
     );
 
     try {
-      const startDate = `${selectedYear}-${selectedMonth}-01`;
-      const endDate = `${selectedYear}-${selectedMonth}-31`;
+        // 年・月文字列から Date オブジェクトを作成
+      const baseDate = parse(
+        `${selectedYear}-${selectedMonth}`,
+        "yyyy-MM",
+        new Date()
+      );
+      // 月初: 常に "01"
+      const startDate = format(baseDate, "yyyy-MM-01");
+      // 月末: endOfMonth で正しい最終日を取得
+      const endDate   = format(endOfMonth(baseDate), "yyyy-MM-dd");
 
       let query = supabase
         .from("live_schedule")
@@ -398,7 +417,7 @@ const HomePage = () => {
         className="max-w-7xl mx-auto"
       >
         <header className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">EhimeLiveDataIntegration</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-2">EhimeLive&ClubEventDataIntegration</h1>
           <p className="text-muted-foreground text-lg">
             Sortable by year, month, area, and venue.
           </p>
