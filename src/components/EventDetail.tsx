@@ -177,7 +177,7 @@ const EventDetail = ({
                 <h3 className="text-lg font-semibold">Images</h3>
                 <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                   {imageErrors[currentImageIndex] ? (
-                    <div className="w-full h-64 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-center p-4">
+                    <div className="w-full min-h-64 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-center p-4">
                       <p className="text-red-500 font-medium mb-2">
                         Failed to retrieve image data from the following image
                         URL
@@ -190,7 +190,7 @@ const EventDetail = ({
                     <img
                       src={imageUrls[currentImageIndex]}
                       alt={`Event image ${currentImageIndex + 1}`}
-                      className="w-full h-64 object-cover"
+                      className="w-full h-auto max-h-96 object-contain"
                       onError={() => {
                         setImageErrors((prev) => ({
                           ...prev,

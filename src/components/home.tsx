@@ -467,12 +467,94 @@ const HomePage = () => {
         className="max-w-7xl mx-auto"
       >
         <header className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">
-            EhimeLive&ClubEventDataIntegration
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Sortable by year, month, area, and venue.
-          </p>
+          <div className="flex items-center gap-6 mb-4">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight mb-2">
+                EhimeLive&ClubEventDataIntegration
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Sortable by year, month, area, and venue.
+              </p>
+            </div>
+            <div className="relative">
+              <svg
+                width="200"
+                height="150"
+                viewBox="0 0 200 150"
+                className="border border-gray-300 rounded-lg bg-white"
+              >
+                {/* 愛媛県のリアルな地図 */}
+                {/* 南予エリア（左側） */}
+                <path
+                  d="M20 50 L35 45 L50 55 L65 60 L75 70 L85 75 L90 85 L95 95 L100 105 L95 115 L85 125 L70 130 L55 125 L40 120 L25 110 L15 95 L10 80 L15 65 Z"
+                  fill={selectedArea === "南予" ? "#ff6b6b" : "#e5e7eb"}
+                  stroke="#374151"
+                  strokeWidth="1"
+                  className="transition-colors duration-300"
+                />
+                {/* 中予エリア（中央） */}
+                <path
+                  d="M85 75 L100 70 L115 65 L130 60 L140 55 L145 65 L150 75 L145 85 L140 95 L135 105 L125 110 L115 115 L105 110 L100 105 L95 95 L90 85 Z"
+                  fill={selectedArea === "中予" ? "#ff6b6b" : "#e5e7eb"}
+                  stroke="#374151"
+                  strokeWidth="1"
+                  className="transition-colors duration-300"
+                />
+                {/* 東予エリア（右側） */}
+                <path
+                  d="M140 55 L155 50 L170 45 L180 40 L185 50 L190 60 L185 70 L180 80 L175 90 L165 95 L155 100 L150 95 L145 85 L150 75 L145 65 Z"
+                  fill={selectedArea === "東予" ? "#ff6b6b" : "#e5e7eb"}
+                  stroke="#374151"
+                  strokeWidth="1"
+                  className="transition-colors duration-300"
+                />
+
+                {/* エリア名ラベル */}
+                <text
+                  x="115"
+                  y="85"
+                  fontSize="12"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  fill="#374151"
+                >
+                  中予
+                </text>
+                <text
+                  x="165"
+                  y="70"
+                  fontSize="12"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  fill="#374151"
+                >
+                  東予
+                </text>
+                <text
+                  x="55"
+                  y="90"
+                  fontSize="12"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  fill="#374151"
+                >
+                  南予
+                </text>
+
+                {/* 愛媛県タイトル */}
+                <text
+                  x="100"
+                  y="20"
+                  fontSize="14"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  fill="#1f2937"
+                >
+                  愛媛県
+                </text>
+              </svg>
+            </div>
+          </div>
         </header>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
