@@ -14,46 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
-      events: {
+      auth_users: {
+        Row: {
+          created_at: string | null
+          id: number
+          name: string
+          password: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          name: string
+          password: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          name?: string
+          password?: string
+        }
+        Relationships: []
+      }
+      live_schedule: {
         Row: {
           content: string | null
-          created_at: string | null
+          created_at: string
+          date: string | null
+          fee: string | null
+          guid: string | null
+          id: number
+          image_url: string | null
+          link: string | null
+          ticket: string | null
+          time: string | null
+          title: string | null
+          venue: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          date?: string | null
+          fee?: string | null
+          guid?: string | null
+          id?: number
+          image_url?: string | null
+          link?: string | null
+          ticket?: string | null
+          time?: string | null
+          title?: string | null
+          venue?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          date?: string | null
+          fee?: string | null
+          guid?: string | null
+          id?: number
+          image_url?: string | null
+          link?: string | null
+          ticket?: string | null
+          time?: string | null
+          title?: string | null
+          venue?: string | null
+        }
+        Relationships: []
+      }
+      live_schedule_20250728: {
+        Row: {
+          content: string | null
+          created_at: string
           date: string | null
           fee: string | null
           id: number
           link: string | null
           ticket: string | null
           time: string | null
-          title: string
+          title: string | null
           venue: string | null
         }
         Insert: {
           content?: string | null
-          created_at?: string | null
+          created_at?: string
           date?: string | null
           fee?: string | null
           id?: number
           link?: string | null
           ticket?: string | null
           time?: string | null
-          title: string
+          title?: string | null
           venue?: string | null
         }
         Update: {
           content?: string | null
-          created_at?: string | null
+          created_at?: string
           date?: string | null
           fee?: string | null
           id?: number
           link?: string | null
           ticket?: string | null
           time?: string | null
-          title?: string
+          title?: string | null
           venue?: string | null
         }
         Relationships: []
       }
-      live_schedule: {
+      live_schedule_test: {
         Row: {
           content: string | null
           created_at: string
