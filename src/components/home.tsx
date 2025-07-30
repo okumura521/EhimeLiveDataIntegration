@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { parse, endOfMonth, format } from "date-fns";
 import { motion } from "framer-motion";
-import { Plus, ArrowUpDown } from "lucide-react";
+import {
+  Plus,
+  ArrowUpDown,
+  MoreVertical,
+  Ticket,
+  ExternalLink,
+  User,
+  LogOut,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -18,9 +26,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Edit, Trash2, Eye } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import EventForm from "@/components/EventForm";
 import EventDetail from "@/components/EventDetail";
+import LoginForm from "@/components/LoginForm";
+import UpdateHistory from "@/components/UpdateHistory";
+import DataInformation from "@/components/DataInformation";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/supabase";
 
@@ -29,7 +46,7 @@ type Event = Database["public"]["Tables"]["live_schedule"]["Row"];
 
 // Define area-venue mapping
 const AREA_VENUES = {
-  "中予": [
+  中予: [
     "necco",
     "oto-doke",
     "SALONKITTY",
@@ -37,8 +54,8 @@ const AREA_VENUES = {
     "WStudioRED",
     "Double-u Studio",
   ],
-  "東予": ["MusicBoxHACO", "JEANDORE", "JamSounds"],
-  "南予": [],
+  東予: ["MusicBoxHACO", "JEANDORE", "JamSounds"],
+  南予: [],
 };
 
 const AREAS = Object.keys(AREA_VENUES);
@@ -58,6 +75,11 @@ const HomePage = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isUpdateHistoryOpen, setIsUpdateHistoryOpen] = useState(false);
+  const [isDataInfoOpen, setIsDataInfoOpen] = useState(false);
 
   // Initialize Supabase client
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -128,17 +150,16 @@ const HomePage = () => {
     if (!selectedYear || !selectedMonth) return;
 
     try {
-
       // 年・月文字列から Date オブジェクトを作成
       const baseDate = parse(
         `${selectedYear}-${selectedMonth}`,
         "yyyy-MM",
-        new Date()
+        new Date(),
       );
       // 月初: 常に "01"
       const startDate = format(baseDate, "yyyy-MM-01");
       // 月末: endOfMonth で正しい最終日を取得
-      const endDate   = format(endOfMonth(baseDate), "yyyy-MM-dd");
+      const endDate = format(endOfMonth(baseDate), "yyyy-MM-dd");
 
       let query = supabase
         .from("live_schedule")
@@ -198,16 +219,16 @@ const HomePage = () => {
     );
 
     try {
-        // 年・月文字列から Date オブジェクトを作成
+      // 年・月文字列から Date オブジェクトを作成
       const baseDate = parse(
         `${selectedYear}-${selectedMonth}`,
         "yyyy-MM",
-        new Date()
+        new Date(),
       );
       // 月初: 常に "01"
       const startDate = format(baseDate, "yyyy-MM-01");
       // 月末: endOfMonth で正しい最終日を取得
-      const endDate   = format(endOfMonth(baseDate), "yyyy-MM-dd");
+      const endDate = format(endOfMonth(baseDate), "yyyy-MM-dd");
 
       let query = supabase
         .from("live_schedule")
@@ -396,6 +417,35 @@ const HomePage = () => {
     }
   };
 
+  // Handle login
+  const handleLogin = async (loginData: { name: string; password: string }) => {
+    try {
+      const { data, error } = await supabase
+        .from("auth_users")
+        .select("*")
+        .eq("name", loginData.name)
+        .eq("password", loginData.password)
+        .single();
+
+      if (error || !data) {
+        return false;
+      }
+
+      setIsAuthenticated(true);
+      setCurrentUser(data.name);
+      return true;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
+    }
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
+
   // Open form for editing
   const handleEditEvent = (event: Event) => {
     setEditingEvent(event);
@@ -417,7 +467,9 @@ const HomePage = () => {
         className="max-w-7xl mx-auto"
       >
         <header className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">EhimeLive&ClubEventDataIntegration</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-2">
+            EhimeLive&ClubEventDataIntegration
+          </h1>
           <p className="text-muted-foreground text-lg">
             Sortable by year, month, area, and venue.
           </p>
@@ -425,6 +477,13 @@ const HomePage = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div className="flex gap-4 items-center flex-wrap">
+            {/* User info display */}
+            {isAuthenticated && currentUser && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                <User className="h-4 w-4" />
+                <span>{currentUser}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Year:</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -503,16 +562,49 @@ const HomePage = () => {
               </Select>
             </div>
           </div>
-          <Button
-            onClick={() => {
-              setEditingEvent(null);
-              setIsFormOpen(true);
-            }}
-            className="flex items-center gap-2"
-          >
-            <Plus size={16} />
-            NewEvent
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Three-dot menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsUpdateHistoryOpen(true)}>
+                  Update History
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsDataInfoOpen(true)}>
+                  Information about the Data
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {isAuthenticated ? (
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => setIsLoginOpen(true)}>
+                    Login
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* New Event Button - only show when authenticated */}
+            {isAuthenticated && (
+              <Button
+                onClick={() => {
+                  setEditingEvent(null);
+                  setIsFormOpen(true);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Plus size={16} />
+                NewEvent
+              </Button>
+            )}
+          </div>
         </div>
 
         <motion.div
@@ -525,29 +617,30 @@ const HomePage = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[250px] font-bold">Title</TableHead>
-                  <TableHead className="w-[150px] font-bold">Link</TableHead>
-                  <TableHead className="w-[250px] font-bold">Content</TableHead>
-                  <TableHead className="w-[150px] font-bold">Venue</TableHead>
                   <TableHead className="w-[120px] font-bold">Date</TableHead>
-                  <TableHead className="w-[100px] font-bold">Fee</TableHead>
-                  <TableHead className="w-[150px] font-bold">Ticket</TableHead>
                   <TableHead className="w-[120px] font-bold">Time</TableHead>
-                  <TableHead className="w-[120px] font-bold text-right">
-                    Actions
+                  <TableHead className="w-[250px] font-bold">Title</TableHead>
+                  <TableHead className="w-[250px] font-bold">Content</TableHead>
+                  <TableHead className="w-[100px] font-bold">Fee</TableHead>
+                  <TableHead className="w-[80px] font-bold text-center">
+                    Ticket
                   </TableHead>
+                  <TableHead className="w-[80px] font-bold text-center">
+                    Link
+                  </TableHead>
+                  <TableHead className="w-[150px] font-bold">Venue</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       Loading events...
                     </TableCell>
                   </TableRow>
                 ) : events.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <div>
                         <p>No events found</p>
                         <p className="text-sm text-muted-foreground mt-2">
@@ -564,66 +657,35 @@ const HomePage = () => {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className={`${hoveredRow === event.id.toString() ? "bg-accent" : ""}`}
+                      className={`cursor-pointer hover:bg-accent ${hoveredRow === event.id.toString() ? "bg-accent" : ""}`}
                       onMouseEnter={() => setHoveredRow(event.id.toString())}
                       onMouseLeave={() => setHoveredRow(null)}
+                      onClick={() => handleViewEvent(event)}
                     >
-                      <TableCell className="font-medium">
-                        {event.title || "No Title"}
-                      </TableCell>
-                      <TableCell className="text-blue-600 hover:underline">
-                        {event.link && (
-                          <a
-                            href={event.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {event.link.length > 20
-                              ? `${event.link.substring(0, 20)}...`
-                              : event.link}
-                          </a>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[250px] truncate">
-                        {event.content || ""}
-                      </TableCell>
-                      <TableCell>{event.venue || ""}</TableCell>
                       <TableCell>
                         {event.date
                           ? new Date(event.date).toLocaleDateString()
                           : ""}
                       </TableCell>
-                      <TableCell>{event.fee || ""}</TableCell>
-                      <TableCell>{event.ticket || ""}</TableCell>
                       <TableCell>{event.time || ""}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleViewEvent(event)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditEvent(event)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteEvent(event.id)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <TableCell className="font-medium">
+                        {event.title || "No Title"}
                       </TableCell>
+                      <TableCell className="max-w-[250px] truncate">
+                        {event.content || ""}
+                      </TableCell>
+                      <TableCell>{event.fee || ""}</TableCell>
+                      <TableCell className="text-center">
+                        {event.ticket && (
+                          <Ticket className="h-4 w-4 text-green-600 mx-auto" />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {event.link && (
+                          <ExternalLink className="h-4 w-4 text-blue-600 mx-auto" />
+                        )}
+                      </TableCell>
+                      <TableCell>{event.venue || ""}</TableCell>
                     </motion.tr>
                   ))
                 )}
@@ -668,7 +730,26 @@ const HomePage = () => {
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
         event={selectedEvent}
+        onEdit={handleEditEvent}
+        onDelete={handleDeleteEvent}
+        isAuthenticated={isAuthenticated}
       />
+
+      {/* Login Form Modal */}
+      <LoginForm
+        open={isLoginOpen}
+        onOpenChange={setIsLoginOpen}
+        onLogin={handleLogin}
+      />
+
+      {/* Update History Modal */}
+      <UpdateHistory
+        open={isUpdateHistoryOpen}
+        onOpenChange={setIsUpdateHistoryOpen}
+      />
+
+      {/* Data Information Modal */}
+      <DataInformation open={isDataInfoOpen} onOpenChange={setIsDataInfoOpen} />
     </div>
   );
 };
