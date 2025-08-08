@@ -93,7 +93,7 @@ const EventDetail = ({
   // Parse image URLs (assuming comma-separated if multiple)
   const imageUrls = displayEvent.image_url
     ? displayEvent.image_url
-        .split(",")
+      .split(/,(?=https?:\/\/)/g)  // httpまたはhttpsで始まる直前のカンマのみで分割
         .map((url) => url.trim())
         .filter((url) => url)
     : [];
