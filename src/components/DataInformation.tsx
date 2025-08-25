@@ -16,98 +16,90 @@ interface DataInformationProps {
 
 const DataInformation = ({
   open = true,
-  onOpenChange = () => {},
+  onOpenChange = () => { },
 }: DataInformationProps) => {
   const venueDataSources = [
     {
-      venue: "necco",
-      area: "中予",
-      dataSource: "Official Website Scraping",
-      method: "Automated web scraping from event calendar",
-      frequency: "Daily at 6:00 AM JST",
-      conditions: "Events with confirmed dates and ticket information",
-      reliability: "High - Direct from venue",
-      lastUpdated: "2024-01-15",
-    },
-    {
-      venue: "oto-doke",
-      area: "中予",
-      dataSource: "RSS Feed Integration",
-      method: "RSS feed parsing from venue's event system",
-      frequency: "Every 4 hours",
-      conditions: "Published events only, excludes private bookings",
-      reliability: "High - Automated feed",
-      lastUpdated: "2024-01-14",
-    },
-    {
-      venue: "SALONKITTY",
-      area: "中予",
-      dataSource: "Social Media API",
-      method: "Instagram and Twitter API integration",
-      frequency: "Real-time monitoring",
-      conditions: "Posts with #event hashtag and date information",
-      reliability: "Medium - Depends on social media posts",
-      lastUpdated: "2024-01-16",
-    },
-    {
-      venue: "KITTYHALL",
-      area: "中予",
-      dataSource: "Manual Entry",
-      method: "Staff manual input from venue communications",
-      frequency: "Weekly updates",
-      conditions: "Confirmed events with complete information",
-      reliability: "High - Verified by staff",
-      lastUpdated: "2024-01-12",
-    },
-    {
-      venue: "WStudioRED",
-      area: "中予",
-      dataSource: "Email Newsletter Parsing",
-      method: "Automated parsing of venue newsletters",
-      frequency: "Upon newsletter receipt",
-      conditions: "Events mentioned in official newsletters",
-      reliability: "Medium - Depends on newsletter format",
-      lastUpdated: "2024-01-13",
-    },
-    {
       venue: "Double-u Studio",
       area: "中予",
-      dataSource: "API Integration",
-      method: "Direct API connection with venue booking system",
-      frequency: "Real-time synchronization",
-      conditions: "Public events only, excludes rehearsals",
-      reliability: "Very High - Direct system integration",
-      lastUpdated: "2024-01-16",
-    },
-    {
-      venue: "MusicBoxHACO",
-      area: "東予",
-      dataSource: "Website Monitoring",
-      method: "Automated monitoring of event page changes",
-      frequency: "Every 6 hours",
-      conditions: "Events with ticket sales information",
-      reliability: "High - Automated detection",
-      lastUpdated: "2024-01-15",
+      dataSource: "未対応",
+      method: "",
+      frequency: "",
+      conditions: "",
+      reliability: "",
+      lastUpdated: "",
     },
     {
       venue: "JEANDORE",
       area: "東予",
-      dataSource: "Phone Call Verification",
-      method: "Weekly phone calls to venue for event confirmation",
-      frequency: "Weekly on Mondays",
-      conditions: "Confirmed public events only",
-      reliability: "Very High - Direct verification",
-      lastUpdated: "2024-01-15",
+      dataSource: "Official WebSite",
+      method: "Website Scraping https://www.jeandore.com/live/live.html にアクセスし更新情報を取得",
+      frequency: "毎日12:00実行",
+      conditions: "イベント識別方法：イベントタイトル名",
+      reliability: "",
+      lastUpdated: "2024-08-24",
     },
     {
       venue: "JamSounds",
       area: "東予",
-      dataSource: "Collaborative Platform",
-      method: "Venue staff directly input events via web portal",
-      frequency: "As events are scheduled",
-      conditions: "All public events and workshops",
-      reliability: "Very High - Direct venue input",
-      lastUpdated: "2024-01-16",
+      dataSource: "未対応",
+      method: "",
+      frequency: "",
+      conditions: "",
+      reliability: "",
+      lastUpdated: "",
+    },
+    {
+      venue: "MusicBoxHACO",
+      area: "東予",
+      dataSource: "Official WebSite",
+      method: "Website Scraping https://www.musicboxhaco.com/schedule にアクセスし更新情報を取得",
+      frequency: "毎日12:00実行",
+      conditions: "イベント識別方法：イベントタイトル名",
+      reliability: "",
+      lastUpdated: "2024-08-24",
+    },
+    {
+      venue: "necco",
+      area: "中予",
+      dataSource: "Official instagram",
+      method: "instagram API 経由で情報を取得※実装予定",
+      frequency: "毎時30分に更新情報確認※未実装",
+      conditions:
+        "・除外設定：タグが＃event以外は対象外とする・イベント識別方法：id",
+      reliability: "",
+      lastUpdated: "2024-07-25",
+    },
+    {
+      venue: "oto-doke",
+      area: "中予",
+      dataSource: "Official WebSite",
+      method: "未対応 ※一部手動で情報取得し追加",
+      frequency: "",
+      conditions: "",
+      reliability: "",
+      lastUpdated: "2024-07-22",
+    },
+    {
+      venue: "SALONKITTY & KITTYHALL",
+      area: "中予",
+      dataSource: "Official WebSite",
+      method: "RSS Feed Integration http://red.double-ustudio.com/feed にアクセスし更新情報を取得",
+      frequency: "毎時30分に更新情報確認",
+      conditions:
+        "開催日はtitleとcontentから抽出し設定 理由：Rssの項目に開催日が無いため。除外設定：Rss categories が「お知らせ」のみの場合 イベント識別方法：guid",
+      reliability: "",
+      lastUpdated: "2025-08-24",
+    },
+    {
+      venue: "WStudioRED",
+      area: "中予",
+      dataSource: "Official WebSite",
+      method: "RSS Feed Integration http://red.double-ustudio.com/feed にアクセスし更新情報を取得",
+      frequency: "毎時30分に更新情報確認",
+      conditions: "イベント識別方法：guid",
+      reliability: "",
+      lastUpdated: "2025-08-24",
     },
   ];
 
@@ -138,9 +130,15 @@ const DataInformation = ({
             Information about the Data
           </DialogTitle>
           <p className="text-muted-foreground">
-            Data source information for each venue, including retrieval methods
-            and conditions
+            各会場の情報を取得するためのデータソース情報、取得方法、取得条件について。
           </p>
+          <p className="text-muted-foreground">
+            共通処理：取得したデータをAI(gemini-2.0-flash)にて解析し、開催日(Date)、時間(time)、タイトル(title)、コンテンツ(Contest)、料金(fee)、チケット(Ticket)、リンク(Link)、会場(Venue)の情報に設定
+          </p>
+          <p className="text-muted-foreground text-sm">
+            ※補足：会場並び順 A→Z
+          </p>
+
         </DialogHeader>
 
         <div className="py-4">
@@ -221,17 +219,13 @@ const DataInformation = ({
           </div>
 
           <div className="mt-8 p-4 bg-muted/50 rounded-lg">
-            <h3 className="font-semibold mb-2">Data Quality Notes</h3>
+            <h3 className="font-semibold mb-2">AI 解析条件</h3>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• All data is processed and validated before display</li>
-              <li>
-                • Event information is cross-referenced when multiple sources
-                are available
-              </li>
-              <li>
-                • Manual verification is performed for high-profile events
-              </li>
-              <li>• Data retention period: 2 years for historical analysis</li>
+              <li>• 入力データのみを解析対象とし、外部情報や推測による補完は行わない</li>
+              <li>• 抽出項目はタイトル、日付、内容、時間、料金、チケットURL、画像URL、会場名</li>
+              <li>• 入力に存在しない項目は必ず null(空文字) とする</li>
+              <li>• HTML特殊文字や不要な空白は除去し、改行は \n で処理</li>
+              <li>• 画像は、同一画像が複数ある場合は最初のURLのみ保持し、srcset がある場合は src を省く</li>
             </ul>
           </div>
         </div>
